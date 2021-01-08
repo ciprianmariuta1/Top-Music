@@ -25,6 +25,53 @@ int raspunde(void *);
 
 int id=-1;
 
+
+void conectare ()
+{
+    printf("Se apeleaza functia conectare\n");
+}
+
+void inregistrare ()
+{
+    printf("Se apeleaza functia inregistrare\n");
+}
+
+void top ()
+{
+    printf("Se apeleaza functia top\n");
+}
+
+void adauga()
+{
+    printf("Se apeleaza functia adauga\n");
+}
+
+void vot ()
+{
+    printf("Se apeleaza functia vot\n");
+}
+
+void comentariu ()
+{
+    printf("Se apeleaza functia comentariu\n");
+}
+
+void vizualizeaza ()
+{
+    printf("Se apeleaza functia vizualizeaza\n");
+}
+
+void sterge ()
+{
+    printf("Se apeleaza functia sterge\n");
+}
+
+void restrictioneaza ()
+{
+    printf("Se apeleaza functia restrictioneaza\n");
+}
+
+
 int main ()
 {
   struct sockaddr_in server;	// structura folosita de server
@@ -133,6 +180,39 @@ int raspunde(void *arg)
 	
 	printf ("[Thread %d]Comanda a fost receptionata...%d\n",tdL.idThread, id);
 	
+    switch (id)
+    {
+        case 1:
+            conectare();
+            break;
+        case 2:
+            inregistrare();
+            break;
+        case 3:
+            top();
+            break;
+        case 4:
+            adauga();
+            break;
+        case 5:
+            vot();
+            break;
+        case 6:
+            comentariu();
+            break;
+        case 7:
+            vizualizeaza();
+            break;
+        case 8:
+            sterge();
+            break;
+        case 9:
+            restrictioneaza();
+            break;
+    }
+
+
+
     if(id == -1) printf("Comanda invalida!\n");
 		      /*pregatim mesajul de raspuns */
 		      //nr++;      
@@ -145,7 +225,7 @@ int raspunde(void *arg)
 		 perror ("[Thread]Eroare la write() catre client.\n");
 		}
 	else
-		printf ("[Thread %d]Mesajul a fost trasmis cu succes.\n",tdL.idThread);
+		printf ("[Thread %d]Mesajul a fost trasmis cu succes.\n\n\n",tdL.idThread);
 	
 	if (id == 0)
     {
