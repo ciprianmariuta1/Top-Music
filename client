@@ -21,18 +21,18 @@ int sd;
 
 int conectare ()
 {
-  printf ("[client]Introduceti numele de utilizator: \n");
+  printf ("[client]Introduceti numele de utilizator: ");
   fflush (stdout);
-  scanf("%s",utilizator);    
-  if (write (sd,utilizator,strlen(utilizator)) <= 0)
+  scanf("%[^\n]%*c",utilizator);    
+  if (write (sd,utilizator,strlen(utilizator)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
   }
-  printf ("[client]Introduceti parola: \n");
+  printf ("[client]Introduceti parola: ");
   fflush (stdout);
-  scanf("%s",parola);    
-  if (write (sd,parola, strlen(parola)) <= 0)
+  scanf("%[^\n]%*c",parola);    
+  if (write (sd,parola, strlen(parola)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -41,25 +41,25 @@ int conectare ()
 
 int inregistrare ()
 {
-  printf ("[client]Introduceti numele de utilizator: \n");
+  printf ("[client]Introduceti numele de utilizator: ");
   fflush (stdout);
-  scanf("%s",utilizator);    
+  scanf("%[^\n]%*c",utilizator);    
   if (write (sd,utilizator,strlen(utilizator)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
   }
-  printf ("[client]Introduceti o parola: \n");
+  printf ("[client]Introduceti o parola: ");
   fflush (stdout);
-  scanf("%s",parola);    
+  scanf("%[^\n]%*c",parola);    
   if (write (sd,parola, strlen(parola)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
   }
-  printf ("[client]Reintroduceti parola: \n");
+  printf ("[client]Reintroduceti parola: ");
   fflush (stdout);
-  scanf("%s",parola);    
+  scanf("%[^\n]%*c",parola);    
   if (write (sd,parola, strlen(parola)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
@@ -69,9 +69,9 @@ int inregistrare ()
 
 int top ()
 {
-  printf ("[client]Alegeti genul muzical: \n");
+  printf ("[client]Alegeti genul muzical: ");
   fflush (stdout);
-  scanf("%s",genul);    
+  scanf("%[^\n]%*c",genul);    
   if (write (sd,genul, strlen(genul)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
@@ -81,41 +81,41 @@ int top ()
 
 int adauga()
 {
-  printf ("[client]Introduceti numele melodiei: \n");
+  printf ("[client]Introduceti numele melodiei: ");
   fflush (stdout);
-  scanf("%s",titlu);    
+  scanf("%[^\n]%*c",titlu);    
   if (write (sd,titlu,strlen(titlu)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
   }
-  printf ("[client]Introduceti numele artistului: \n");
+  printf ("[client]Introduceti numele artistului: ");
   fflush (stdout);
-  scanf("%s",artist);    
+  scanf("%[^\n]%*c",artist);    
   if (write (sd,artist, strlen(artist)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
   }
-  printf ("[client]Introduceti genul muzical: \n");
+  printf ("[client]Introduceti genul muzical: ");
   fflush (stdout);
-  scanf("%s",genul);    
+  scanf("%[^\n]%*c",genul);    
   if (write (sd,genul, strlen(genul)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
   }
-  printf ("[client]Introduceti o scurta descriere: \n");
+  printf ("[client]Introduceti o scurta descriere: ");
   fflush (stdout);
-  scanf("%s",descriere);    
+  scanf("%[^\n]%*c",descriere);    
   if (write (sd,descriere, strlen(descriere)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
   }
-  printf ("[client]Introduceti un link catre melodie: \n");
+  printf ("[client]Introduceti un link catre melodie: ");
   fflush (stdout);
-  scanf("%s",link_yt);    
+  scanf("%[^\n]%*c",link_yt);    
   if (write (sd,link_yt, strlen(link_yt)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
@@ -125,9 +125,9 @@ int adauga()
 
 int vot ()
 {
-  printf ("[client]Introduceti numele melodiei: \n");
+  printf ("[client]Introduceti numele melodiei: ");
   fflush (stdout);
-  scanf("%s",titlu);    
+  scanf("%[^\n]%*c",titlu);    
   if (write (sd,titlu, strlen(titlu)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
@@ -137,17 +137,17 @@ int vot ()
 
 int comentariu ()
 {
-  printf ("[client]Introduceti numele melodiei: \n");
+  printf ("[client]Introduceti numele melodiei: ");
   fflush (stdout);
-  scanf("%s", titlu);    
+  scanf("%[^\n]%*c", titlu);    
   if (write (sd,titlu, strlen(titlu)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
   }
-  printf ("[client]Introduceti comentariul: \n");
+  printf ("[client]Introduceti comentariul: ");
   fflush (stdout);
-  scanf("%s", com);    
+  scanf("%[^\n]%*c", com);    
   if (write (sd,com, strlen(com)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
@@ -157,9 +157,9 @@ int comentariu ()
 
 int vizualizeaza ()
 {
-  printf ("[client]Introduceti numele melodiei: \n");
+  printf ("[client]Introduceti numele melodiei: ");
   fflush (stdout);
-  scanf("%s", titlu);    
+  scanf("%[^\n]%*c", titlu);    
   if (write (sd,titlu, strlen(titlu)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
@@ -169,9 +169,9 @@ int vizualizeaza ()
 
 int sterge ()
 {
-  printf ("[client]Introduceti numele melodiei: \n");
+  printf ("[client]Introduceti numele melodiei: ");
   fflush (stdout);
-  scanf("%s", titlu);    
+  scanf("%[^\n]%*c", titlu);    
   if (write (sd,titlu, strlen(titlu)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
@@ -181,9 +181,9 @@ int sterge ()
 
 int restrictioneaza ()
 {
-  printf ("[client]Introduceti numele utilizatorului: \n");
+  printf ("[client]Introduceti numele utilizatorului: ");
   fflush (stdout);
-  scanf("%s", utilizator);    
+  scanf("%[^\n]%*c", utilizator);    
   if (write (sd,utilizator, strlen(utilizator)) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
@@ -242,9 +242,12 @@ while(1)
   //nr2=atoi(buf);
   //nr=atoi(buf);
   //scanf("%d",&nr);
+  printf("Introduceti comanda: ");
+  fflush (stdout);
+  scanf("%[^\n]%*c", comanda);
   
   printf("[client] Am citit: %s\n",comanda);
-
+/*
 if(strcmp(comanda,"conectare")==0) id=1;
         else if(strcmp(comanda,"inregistrare")==0) id=2;
             else if(strcmp(comanda,"top")==0) id=3;
@@ -256,14 +259,28 @@ if(strcmp(comanda,"conectare")==0) id=1;
                                     else if(strcmp(comanda,"restrictioneaza")==0) id=9;
                                         else if(strcmp(comanda,"iesire")==0) id=0;
 
-
+*/
   /* trimiterea mesajului la server */
-  if (write (sd,&id,sizeof(int)) <= 0)
+  if (write (sd,comanda,strlen(comanda)+1) <= 0)
     {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
     }
 
+if(strcmp(comanda,"conectare")==0) conectare();
+        else if(strcmp(comanda,"inregistrare")==0) inregistrare();
+            else if(strcmp(comanda,"top")==0) top();
+                else if(strcmp(comanda,"adauga")==0) adauga();
+                    else if(strcmp(comanda,"vot")==0) vot();
+                        else if(strcmp(comanda,"comentariu")==0) comentariu();
+                            else if(strcmp(comanda,"vizualizeaza")==0) vizualizeaza();
+                                else if(strcmp(comanda,"sterge")==0) sterge();
+                                    else if(strcmp(comanda,"restrictioneaza")==0) restrictioneaza();
+
+
+
+
+/*
 switch (id)
     {
         case 1:
@@ -293,25 +310,28 @@ switch (id)
         case 9:
             restrictioneaza();
             break;
+        default:
+            break;
     }
+*/
 
-
-int mesaj;
-
+char mesaj[15];
   /* citirea raspunsului dat de server 
      (apel blocant pina cind serverul raspunde) */
-  if (read (sd, &mesaj,sizeof(int)) < 0)
+  if (read (sd, mesaj,15) < 0)
     {
       perror ("[client]Eroare la read() de la server.\n");
       return errno;
     }
 
   /* afisam mesajul primit */
-  printf ("[client]Mesajul primit este: %d\n", mesaj);
+  printf ("[client]Mesajul primit este: %s\n", mesaj);
 
-if(mesaj == -1) printf("Comanda invalida!\n");
+//if(mesaj == -1) printf("Comanda invalida!\n");
 
-	if (mesaj==0)
+
+
+	if (strcmp(mesaj,"iesire")==0)
     {
         printf("Clientul a fost deconectat!\n");
         break;
