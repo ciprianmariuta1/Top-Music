@@ -44,7 +44,7 @@ int inregistrare ()
   printf ("[client]Introduceti numele de utilizator: ");
   fflush (stdout);
   scanf("%[^\n]%*c",utilizator);    
-  if (write (sd,utilizator,strlen(utilizator)) <= 0)
+  if (write (sd,utilizator,strlen(utilizator)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -52,7 +52,7 @@ int inregistrare ()
   printf ("[client]Introduceti o parola: ");
   fflush (stdout);
   scanf("%[^\n]%*c",parola);    
-  if (write (sd,parola, strlen(parola)) <= 0)
+  if (write (sd,parola, strlen(parola)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -60,7 +60,7 @@ int inregistrare ()
   printf ("[client]Reintroduceti parola: ");
   fflush (stdout);
   scanf("%[^\n]%*c",parola);    
-  if (write (sd,parola, strlen(parola)) <= 0)
+  if (write (sd,parola, strlen(parola)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -72,7 +72,7 @@ int top ()
   printf ("[client]Alegeti genul muzical: ");
   fflush (stdout);
   scanf("%[^\n]%*c",genul);    
-  if (write (sd,genul, strlen(genul)) <= 0)
+  if (write (sd,genul, strlen(genul)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -84,7 +84,7 @@ int adauga()
   printf ("[client]Introduceti numele melodiei: ");
   fflush (stdout);
   scanf("%[^\n]%*c",titlu);    
-  if (write (sd,titlu,strlen(titlu)) <= 0)
+  if (write (sd,titlu,strlen(titlu)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -92,7 +92,7 @@ int adauga()
   printf ("[client]Introduceti numele artistului: ");
   fflush (stdout);
   scanf("%[^\n]%*c",artist);    
-  if (write (sd,artist, strlen(artist)) <= 0)
+  if (write (sd,artist, strlen(artist)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -100,7 +100,7 @@ int adauga()
   printf ("[client]Introduceti genul muzical: ");
   fflush (stdout);
   scanf("%[^\n]%*c",genul);    
-  if (write (sd,genul, strlen(genul)) <= 0)
+  if (write (sd,genul, strlen(genul)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -108,7 +108,7 @@ int adauga()
   printf ("[client]Introduceti o scurta descriere: ");
   fflush (stdout);
   scanf("%[^\n]%*c",descriere);    
-  if (write (sd,descriere, strlen(descriere)) <= 0)
+  if (write (sd,descriere, strlen(descriere)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -116,7 +116,7 @@ int adauga()
   printf ("[client]Introduceti un link catre melodie: ");
   fflush (stdout);
   scanf("%[^\n]%*c",link_yt);    
-  if (write (sd,link_yt, strlen(link_yt)) <= 0)
+  if (write (sd,link_yt, strlen(link_yt)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -128,7 +128,7 @@ int vot ()
   printf ("[client]Introduceti numele melodiei: ");
   fflush (stdout);
   scanf("%[^\n]%*c",titlu);    
-  if (write (sd,titlu, strlen(titlu)) <= 0)
+  if (write (sd,titlu, strlen(titlu)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -140,7 +140,7 @@ int comentariu ()
   printf ("[client]Introduceti numele melodiei: ");
   fflush (stdout);
   scanf("%[^\n]%*c", titlu);    
-  if (write (sd,titlu, strlen(titlu)) <= 0)
+  if (write (sd,titlu, strlen(titlu)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -148,7 +148,7 @@ int comentariu ()
   printf ("[client]Introduceti comentariul: ");
   fflush (stdout);
   scanf("%[^\n]%*c", com);    
-  if (write (sd,com, strlen(com)) <= 0)
+  if (write (sd,com, strlen(com)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -160,7 +160,7 @@ int vizualizeaza ()
   printf ("[client]Introduceti numele melodiei: ");
   fflush (stdout);
   scanf("%[^\n]%*c", titlu);    
-  if (write (sd,titlu, strlen(titlu)) <= 0)
+  if (write (sd,titlu, strlen(titlu)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -172,7 +172,7 @@ int sterge ()
   printf ("[client]Introduceti numele melodiei: ");
   fflush (stdout);
   scanf("%[^\n]%*c", titlu);    
-  if (write (sd,titlu, strlen(titlu)) <= 0)
+  if (write (sd,titlu, strlen(titlu)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
@@ -184,7 +184,7 @@ int restrictioneaza ()
   printf ("[client]Introduceti numele utilizatorului: ");
   fflush (stdout);
   scanf("%[^\n]%*c", utilizator);    
-  if (write (sd,utilizator, strlen(utilizator)) <= 0)
+  if (write (sd,utilizator, strlen(utilizator)+1) <= 0)
   {
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
