@@ -24,11 +24,26 @@ static void *treat(void *); /* functia executata de fiecare thread ce realizeaza
 int raspunde(void *);
 
 int id=-1;
+char comanda[15], mesaj[15];
 
+char utilizator[20], parola[20], genul[15], titlu[20], artist[20], descriere[100], link_yt[30], com[100];
 
-void conectare ()
+void conectare (int descriptor, int thread)
 {
     printf("Se apeleaza functia conectare\n");
+    if (read (descriptor, utilizator,20) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    if (read (descriptor, parola,20) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+      printf("A fost receptionat numele de utilizator: %s si parola: %s.\n",utilizator, parola);
 }
 
 void inregistrare ()
@@ -129,7 +144,7 @@ int main ()
 
       // client= malloc(sizeof(int));
       /* acceptam un client (stare blocanta pina la realizarea conexiunii) */
-      if ( (client = accept (sd, (struct sockaddr *) &from, &length)) < 0)
+  if ( (client = accept (sd, (struct sockaddr *) &from, &length)) < 0)
 	{
 	  perror ("[server]Eroare la accept().\n");
 	  continue;
@@ -168,22 +183,35 @@ static void *treat(void * arg)
 
 int raspunde(void *arg)
 {
-    int i=0;
+  int i=0;
 	struct thData tdL; 
 	tdL= *((struct thData*)arg);
-	if (read (tdL.cl, &id,sizeof(int)) <= 0)
+	if (read (tdL.cl, comanda,15) <= 0)
 			{
 			  printf("[Thread %d]\n",tdL.idThread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
 	
-	printf ("[Thread %d]Comanda a fost receptionata...%d\n",tdL.idThread, id);
+	printf ("[Thread %d]Comanda a fost receptionata...%s\n",tdL.idThread, comanda);
 	
-    switch (id)
+int invalid=0, iesire=0;
+
+  if(strcmp(comanda,"conectare")==0) conectare(tdL.cl,tdL.idThread);
+        else if(strcmp(comanda,"inregistrare")==0) inregistrare();
+            else if(strcmp(comanda,"top")==0) top();
+                else if(strcmp(comanda,"adauga")==0) adauga();
+                    else if(strcmp(comanda,"vot")==0) vot();
+                        else if(strcmp(comanda,"comentariu")==0) comentariu();
+                            else if(strcmp(comanda,"vizualizeaza")==0) vizualizeaza();
+                                else if(strcmp(comanda,"sterge")==0) sterge();
+                                    else if(strcmp(comanda,"restrictioneaza")==0) restrictioneaza();
+                                      else if(strcmp(comanda,"iesire")==0) iesire = 1;
+                                        else invalid = 1;
+    /*switch (id)
     {
         case 1:
-            conectare();
+            conectare(tdL.cl, tdL.idThread);
             break;
         case 2:
             inregistrare();
@@ -210,16 +238,22 @@ int raspunde(void *arg)
             restrictioneaza();
             break;
     }
+  */
+  
+  strcpy(mesaj, comanda);
 
-
-
-    if(id == -1) printf("Comanda invalida!\n");
+    if(invalid == 1) 
+    {
+      strcpy(mesaj,"invalida");  
+      printf("Comanda invalida!\n");
+    }
 		      /*pregatim mesajul de raspuns */
 		      //nr++;      
-	printf("[Thread %d]Trimitem mesajul inapoi...%d\n",tdL.idThread, id);
+	printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, mesaj);
 		      
 	      /* returnam mesajul clientului */
-	 if (write (tdL.cl, &id, sizeof(int)) <= 0)
+    fflush (stdout);
+	 if (write (tdL.cl, mesaj, strlen(mesaj)+1) <= 0)
 		{
 		 printf("[Thread %d] ",tdL.idThread);
 		 perror ("[Thread]Eroare la write() catre client.\n");
@@ -227,7 +261,7 @@ int raspunde(void *arg)
 	else
 		printf ("[Thread %d]Mesajul a fost trasmis cu succes.\n\n\n",tdL.idThread);
 	
-	if (id == 0)
+	if (iesire==1)
     {
         printf("Clientul %d va fi deconectat!\n", tdL.idThread);
 	    return 2;
