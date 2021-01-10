@@ -46,44 +46,144 @@ void conectare (int descriptor, int thread)
       printf("A fost receptionat numele de utilizator: %s si parola: %s.\n",utilizator, parola);
 }
 
-void inregistrare ()
+void inregistrare (int descriptor, int thread)
 {
+    char parola1[20];
     printf("Se apeleaza functia inregistrare\n");
+    if (read (descriptor, utilizator,20) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    if (read (descriptor, parola,20) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    if (read (descriptor, parola1,20) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    printf("A fost receptionat numele de utilizator: %s si parola: %s.\n",utilizator, parola);
+
 }
 
-void top ()
+void top (int descriptor, int thread)
 {
     printf("Se apeleaza functia top\n");
+    if (read (descriptor, genul,15) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    printf("A fost receptionat genul muzical dorit: %s\n", genul);
 }
 
-void adauga()
+void adauga(int descriptor, int thread)
 {
     printf("Se apeleaza functia adauga\n");
+    if (read (descriptor, titlu,20) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    if (read (descriptor, artist,20) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    if (read (descriptor, genul,15) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    if (read (descriptor, descriere,100) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    if (read (descriptor, link_yt,30) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    printf("Au fost receptionate datele pentru adaugarea melodiei \"%s\", interpretata de %s, ce face parte din categoria %s. %s. Link: %s\n", titlu, artist, genul, descriere, link_yt);
 }
 
-void vot ()
+void vot (int descriptor, int thread)
 {
     printf("Se apeleaza functia vot\n");
+    if (read (descriptor, titlu,20) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    printf("A fost receptionat titlul piesei pe care doriti sa o votati: %s\n", titlu);
 }
 
-void comentariu ()
+void comentariu (int descriptor, int thread)
 {
     printf("Se apeleaza functia comentariu\n");
+    if (read (descriptor, titlu,20) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    if (read (descriptor, com,100) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    printf("A fost receptionat comentariul dumneavoastra pentru melodia \"%s\": %s\n", titlu, com);
 }
 
-void vizualizeaza ()
+void vizualizeaza (int descriptor, int thread)
 {
     printf("Se apeleaza functia vizualizeaza\n");
+    if (read (descriptor, titlu,20) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    printf("A fost receptionat titlul melodiei pe care doriti sa o vizualizati: %s\n", titlu);
 }
 
-void sterge ()
+void sterge (int descriptor, int thread)
 {
     printf("Se apeleaza functia sterge\n");
+    if (read (descriptor, titlu,20) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    printf("A fost receptionat titlul melodiei pe care doriti sa o stergeti: %s\n", titlu);
 }
 
-void restrictioneaza ()
+void restrictioneaza (int descriptor, int thread)
 {
     printf("Se apeleaza functia restrictioneaza\n");
+    if (read (descriptor, utilizator,20) <= 0)
+			{
+			  printf("[Thread %d]\n",thread);
+			  perror ("Eroare la read() de la client.\n");
+			
+			}
+    printf("A fost receptionat numele utilizatorului pe care doriti sa il restrictionati: %s\n", utilizator);
 }
 
 
@@ -198,14 +298,14 @@ int raspunde(void *arg)
 int invalid=0, iesire=0;
 
   if(strcmp(comanda,"conectare")==0) conectare(tdL.cl,tdL.idThread);
-        else if(strcmp(comanda,"inregistrare")==0) inregistrare();
-            else if(strcmp(comanda,"top")==0) top();
-                else if(strcmp(comanda,"adauga")==0) adauga();
-                    else if(strcmp(comanda,"vot")==0) vot();
-                        else if(strcmp(comanda,"comentariu")==0) comentariu();
-                            else if(strcmp(comanda,"vizualizeaza")==0) vizualizeaza();
-                                else if(strcmp(comanda,"sterge")==0) sterge();
-                                    else if(strcmp(comanda,"restrictioneaza")==0) restrictioneaza();
+        else if(strcmp(comanda,"inregistrare")==0) inregistrare(tdL.cl,tdL.idThread);
+            else if(strcmp(comanda,"top")==0) top(tdL.cl,tdL.idThread);
+                else if(strcmp(comanda,"adauga")==0) adauga(tdL.cl,tdL.idThread);
+                    else if(strcmp(comanda,"vot")==0) vot(tdL.cl,tdL.idThread);
+                        else if(strcmp(comanda,"comentariu")==0) comentariu(tdL.cl,tdL.idThread);
+                            else if(strcmp(comanda,"vizualizeaza")==0) vizualizeaza(tdL.cl,tdL.idThread);
+                                else if(strcmp(comanda,"sterge")==0) sterge(tdL.cl,tdL.idThread);
+                                    else if(strcmp(comanda,"restrictioneaza")==0) restrictioneaza(tdL.cl,tdL.idThread);
                                       else if(strcmp(comanda,"iesire")==0) iesire = 1;
                                         else invalid = 1;
     /*switch (id)
