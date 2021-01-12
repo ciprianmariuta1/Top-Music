@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <pthread.h>
+#include <sqlite3.h>
+
 
 /* portul folosit */
 #define PORT 2908
@@ -24,9 +26,72 @@ static void *treat(void *); /* functia executata de fiecare thread ce realizeaza
 int raspunde(void *);
 
 int id=-1;
-char comanda[15], mesaj[15];
+char comanda[15], mesaj[50];
 
 char utilizator[20], parola[20], genul[15], titlu[20], artist[20], descriere[100], link_yt[30], com[100];
+
+int eroare = 0;
+
+ sqlite3* db;
+  
+
+int bazaDeDate()
+{
+  char creare_tabela_melodii[] = "CREATE TABLE IF NOT EXISTS MELODII("
+                                "M_ID INT PRIMARY KEY NOT NULL, "
+                                "M_TITLU CHAR(25) NOT NULL, "
+                                "M_ARTIST CHAR(25) NOT NULL, "
+                                "M_GEN TEXT NOT NULL, "
+                                "M_DESCRIERE CHAR(100), "
+                                "M_LINK TEXT NOT NULL );";
+  
+  char creare_tabela_comentarii[] = "CREATE TABLE IF NOT EXISTS COMENTARII("
+                                "M_ID INT PRIMARY KEY NOT NULL, "
+                                "C_COMENTARIU TEXT NOT NULL );";
+  
+  char creare_tabela_utilizatori[] = "CREATE TABLE IF NOT EXISTS UTILIZATORI("
+                                "U_ID INT PRIMARY KEY NOT NULL, "
+                                "U_NUME CHAR(25) NOT NULL, "
+                                "U_PAROLA CHAR(25) NOT NULL, "
+                                "U_PERMISIUNE INT NOT NULL );";
+  
+
+
+  
+  eroare = sqlite3_open("topmusic.db", &db);
+  char* mesajEroare;
+  if(eroare != SQLITE_OK)
+  {
+    printf("Eroare la deschiderea bazei de date: %s \n", mesajEroare);
+    return(0);
+  }
+  else printf("Baza de date a fost deschisa cu succes! \n");
+  
+  eroare = sqlite3_exec(db,creare_tabela_melodii,NULL,0,&mesajEroare);
+  if(eroare != SQLITE_OK)
+  {
+    printf("Eroare la crearea tabelei Melodii: %s \n", mesajEroare);
+    return(0);
+  }
+  //else printf("Tabela Melodii a fost creata cu succes! \n");
+  
+  eroare = sqlite3_exec(db,creare_tabela_comentarii,NULL,0,&mesajEroare);
+  if(eroare != SQLITE_OK)
+  {
+    printf("Eroare la crearea tabelei Comentarii: %s \n", mesajEroare);
+    return(0);
+  }
+  //else printf("Tabela Comentarii a fost creata cu succes! \n");
+
+  eroare = sqlite3_exec(db,creare_tabela_utilizatori,NULL,0,&mesajEroare);
+  if(eroare != SQLITE_OK)
+  {
+    printf("Eroare la crearea tabelei Utilizatori: %s \n", mesajEroare);
+    return(0);
+  }
+  //else printf("Tabela Utilizatori a fost creata cu succes! \n");
+  
+}
 
 void conectare (int descriptor, int thread)
 {
@@ -44,6 +109,25 @@ void conectare (int descriptor, int thread)
 			
 			}
       printf("A fost receptionat numele de utilizator: %s si parola: %s.\n",utilizator, parola);
+
+    sqlite3_stmt *stmt;
+    char* sql = "SELECT EXISTS (SELECT u_nume, u_prenume FROM utilizatori WHERE u_nume = \"?\" AND u_parola = \"?\"";
+    eroare = sqlite3_prepare_v2(db, sql, strlen(sql)+1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, utilizator, strlen(utilizator), NULL);
+    sqlite3_bind_text(stmt, 2, parola, strlen(parola), NULL);
+    
+    if(sqlite3_step(stmt) == 1)
+    { 
+      printf("Conectare reusita!\n");
+      strcpy(mesaj, "Conectat!");
+    }
+    else
+    {
+       printf("Conectare nereusita! Reincercati!\n");
+       strcpy(mesaj, "Conectare nereusita! Reincercati!");
+    }
+    sqlite3_reset(stmt);
+    sqlite3_finalize(stmt);
 }
 
 void inregistrare (int descriptor, int thread)
@@ -150,9 +234,9 @@ void comentariu (int descriptor, int thread)
     printf("A fost receptionat comentariul dumneavoastra pentru melodia \"%s\": %s\n", titlu, com);
 }
 
-void vizualizeaza (int descriptor, int thread)
+void vizualizare (int descriptor, int thread)
 {
-    printf("Se apeleaza functia vizualizeaza\n");
+    printf("Se apeleaza functia vizualizare\n");
     if (read (descriptor, titlu,20) <= 0)
 			{
 			  printf("[Thread %d]\n",thread);
@@ -189,12 +273,16 @@ void restrictioneaza (int descriptor, int thread)
 
 int main ()
 {
+
+  bazaDeDate();
+
   struct sockaddr_in server;	// structura folosita de server
   struct sockaddr_in from;	
   int sd;		//descriptorul de socket 
   int pid;
   pthread_t th[100];    //Identificatorii thread-urilor care se vor crea
 	int i=0;
+  
   
 
   /* crearea unui socket */
@@ -303,45 +391,13 @@ int invalid=0, iesire=0;
                 else if(strcmp(comanda,"adauga")==0) adauga(tdL.cl,tdL.idThread);
                     else if(strcmp(comanda,"vot")==0) vot(tdL.cl,tdL.idThread);
                         else if(strcmp(comanda,"comentariu")==0) comentariu(tdL.cl,tdL.idThread);
-                            else if(strcmp(comanda,"vizualizeaza")==0) vizualizeaza(tdL.cl,tdL.idThread);
+                            else if(strcmp(comanda,"vizualizare")==0) vizualizare(tdL.cl,tdL.idThread);
                                 else if(strcmp(comanda,"sterge")==0) sterge(tdL.cl,tdL.idThread);
                                     else if(strcmp(comanda,"restrictioneaza")==0) restrictioneaza(tdL.cl,tdL.idThread);
                                       else if(strcmp(comanda,"iesire")==0) iesire = 1;
                                         else invalid = 1;
-    /*switch (id)
-    {
-        case 1:
-            conectare(tdL.cl, tdL.idThread);
-            break;
-        case 2:
-            inregistrare();
-            break;
-        case 3:
-            top();
-            break;
-        case 4:
-            adauga();
-            break;
-        case 5:
-            vot();
-            break;
-        case 6:
-            comentariu();
-            break;
-        case 7:
-            vizualizeaza();
-            break;
-        case 8:
-            sterge();
-            break;
-        case 9:
-            restrictioneaza();
-            break;
-    }
-  */
-  
-  strcpy(mesaj, comanda);
-
+    if(strcmp(comanda,"iesire") == 0)
+      strcpy(mesaj, comanda);
     if(invalid == 1) 
     {
       strcpy(mesaj,"invalida");  
@@ -352,7 +408,7 @@ int invalid=0, iesire=0;
 	printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, mesaj);
 		      
 	      /* returnam mesajul clientului */
-    fflush (stdout);
+   fflush (stdout);
 	 if (write (tdL.cl, mesaj, strlen(mesaj)+1) <= 0)
 		{
 		 printf("[Thread %d] ",tdL.idThread);
@@ -363,7 +419,7 @@ int invalid=0, iesire=0;
 	
 	if (iesire==1)
     {
-        printf("Clientul %d va fi deconectat!\n", tdL.idThread);
+      printf("Clientul %d va fi deconectat!\n", tdL.idThread);
 	    return 2;
     }		
 else return 1;
