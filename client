@@ -155,7 +155,7 @@ int comentariu ()
   }
 }
 
-int vizualizeaza ()
+int vizualizare ()
 {
   printf ("[client]Introduceti numele melodiei: ");
   fflush (stdout);
@@ -273,52 +273,18 @@ if(strcmp(comanda,"conectare")==0) conectare();
                 else if(strcmp(comanda,"adauga")==0) adauga();
                     else if(strcmp(comanda,"vot")==0) vot();
                         else if(strcmp(comanda,"comentariu")==0) comentariu();
-                            else if(strcmp(comanda,"vizualizeaza")==0) vizualizeaza();
+                            else if(strcmp(comanda,"vizualizare")==0) vizualizare();
                                 else if(strcmp(comanda,"sterge")==0) sterge();
                                     else if(strcmp(comanda,"restrictioneaza")==0) restrictioneaza();
 
 
 
 
-/*
-switch (id)
-    {
-        case 1:
-            conectare();
-            break;
-        case 2:
-            inregistrare();
-            break;
-        case 3:
-            top();
-            break;
-        case 4:
-            adauga();
-            break;
-        case 5:
-            vot();
-            break;
-        case 6:
-            comentariu();
-            break;
-        case 7:
-            vizualizeaza();
-            break;
-        case 8:
-            sterge();
-            break;
-        case 9:
-            restrictioneaza();
-            break;
-        default:
-            break;
-    }
-*/
 
-char mesaj[15];
+char mesaj[50];
   /* citirea raspunsului dat de server 
      (apel blocant pina cind serverul raspunde) */
-  if (read (sd, mesaj,15) < 0)
+  if (read (sd, mesaj,50) < 0)
     {
       perror ("[client]Eroare la read() de la server.\n");
       return errno;
