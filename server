@@ -25,8 +25,10 @@ typedef struct thData{
 static void *treat(void *); /* functia executata de fiecare thread ce realizeaza comunicarea cu clientii */
 int raspunde(void *);
 
+int clienti_conectati[100] = {0}; //vector pentru evidenta utilizatorilor conectati intr-o sesiune
+
 int id=-1;
-char comanda[15], mesaj[50];
+char comanda[15], mesaj[300]; //comanda primita de server si mesajul trimis catre client
 
 char utilizator[20], parola[20], genul[15], titlu[20], artist[20], descriere[100], link_yt[30], com[100];
 
@@ -37,28 +39,29 @@ int eroare = 0;
 
 int bazaDeDate()
 {
+  eroare = sqlite3_open("topmusic.db", &db); //se deschide baza de date
+  //se creeaza tabelele melodii, comentarii si utilizatori
   char creare_tabela_melodii[] = "CREATE TABLE IF NOT EXISTS MELODII("
-                                "M_ID INT PRIMARY KEY NOT NULL, "
-                                "M_TITLU CHAR(25) NOT NULL, "
+                                "M_TITLU CHAR(25) PRIMARY KEY NOT NULL, "
                                 "M_ARTIST CHAR(25) NOT NULL, "
                                 "M_GEN TEXT NOT NULL, "
+                                "M_VOTURI INT, "
                                 "M_DESCRIERE CHAR(100), "
                                 "M_LINK TEXT NOT NULL );";
   
   char creare_tabela_comentarii[] = "CREATE TABLE IF NOT EXISTS COMENTARII("
-                                "M_ID INT PRIMARY KEY NOT NULL, "
+                                "M_TITLU CHAR(25) PRIMARY KEY NOT NULL, "
                                 "C_COMENTARIU TEXT NOT NULL );";
   
   char creare_tabela_utilizatori[] = "CREATE TABLE IF NOT EXISTS UTILIZATORI("
-                                "U_ID INT PRIMARY KEY NOT NULL, "
-                                "U_NUME CHAR(25) NOT NULL, "
+                                "U_NUME CHAR(25) PRIMARY KEY NOT NULL, "
                                 "U_PAROLA CHAR(25) NOT NULL, "
-                                "U_PERMISIUNE INT NOT NULL );";
+                                "U_PERMISIUNE INT NOT NULL, "
+                                "U_ADMINISTRATOR INT NOT NULL );";
   
 
 
   
-  eroare = sqlite3_open("topmusic.db", &db);
   char* mesajEroare;
   if(eroare != SQLITE_OK)
   {
@@ -90,19 +93,20 @@ int bazaDeDate()
     return(0);
   }
   //else printf("Tabela Utilizatori a fost creata cu succes! \n");
-  
+  sqlite3_close(db);
 }
 
-void conectare (int descriptor, int thread)
+void conectare (int descriptor, int thread) //functie pentru conectarea unui utilizator deja existent
 {
+    eroare = sqlite3_open("topmusic.db", &db); //se deschide baza de date
     printf("Se apeleaza functia conectare\n");
-    if (read (descriptor, utilizator,20) <= 0)
+    if (read (descriptor, utilizator,20) <= 0) //se citeste utilizatorul
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
-    if (read (descriptor, parola,20) <= 0)
+    if (read (descriptor, parola,20) <= 0) //se citeste parola
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
@@ -111,169 +115,467 @@ void conectare (int descriptor, int thread)
       printf("A fost receptionat numele de utilizator: %s si parola: %s.\n",utilizator, parola);
 
     sqlite3_stmt *stmt;
-    char* sql = "SELECT EXISTS (SELECT u_nume, u_prenume FROM utilizatori WHERE u_nume = \"?\" AND u_parola = \"?\"";
-    eroare = sqlite3_prepare_v2(db, sql, strlen(sql)+1, &stmt, NULL);
+    char* sql = "SELECT EXISTS (SELECT 1 FROM utilizatori WHERE u_nume = ? AND u_parola = ?);";
+    eroare = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
     sqlite3_bind_text(stmt, 1, utilizator, strlen(utilizator), NULL);
     sqlite3_bind_text(stmt, 2, parola, strlen(parola), NULL);
-    
-    if(sqlite3_step(stmt) == 1)
-    { 
-      printf("Conectare reusita!\n");
-      strcpy(mesaj, "Conectat!");
-    }
-    else
+    //se apeleaza interogarea sql
+    char char_verificare[2];
+    int verificare;
+    int step = sqlite3_step(stmt);
+    if(step == SQLITE_ROW)
     {
-       printf("Conectare nereusita! Reincercati!\n");
-       strcpy(mesaj, "Conectare nereusita! Reincercati!");
+        strcpy(char_verificare, sqlite3_column_text(stmt, 0));    
+        verificare = atoi(char_verificare);
     }
+    if(verificare == 1) //se verifica daca utilizatorul exista in baza de date
+    {
+      clienti_conectati[thread] = 1;
+      printf("%d\n", clienti_conectati[thread]);
+      printf("Conectare cu succes!\n");
+      strcpy(mesaj, "Conectare reusita!");
+    }
+    else{
+      printf("Conectarea a esuat! Reincercati!\n");
+      strcpy(mesaj, "Conectarea a esuat! Reincercati!");
+    }
+    
     sqlite3_reset(stmt);
     sqlite3_finalize(stmt);
+
+    sqlite3_close(db); //se inchide baza de date
 }
 
-void inregistrare (int descriptor, int thread)
+int inregistrare (int descriptor, int thread) //functie pentru inregistrarea unui nou utilizator
 {
+    eroare = sqlite3_open("topmusic.db", &db); //se deschide baza de date
     char parola1[20];
     printf("Se apeleaza functia inregistrare\n");
-    if (read (descriptor, utilizator,20) <= 0)
+    if (read (descriptor, utilizator,20) <= 0) //se citeste utilizatorul
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
-    if (read (descriptor, parola,20) <= 0)
+    if (read (descriptor, parola,20) <= 0) //se citeste parola
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
-    if (read (descriptor, parola1,20) <= 0)
+    if (read (descriptor, parola1,20) <= 0) //se citeste din nou parola
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
-			}
+			}  
     printf("A fost receptionat numele de utilizator: %s si parola: %s.\n",utilizator, parola);
+    
+    if(strcmp(parola, parola1) != 0) //se verifica daca cele doua parole sunt identica
+    {
+      //printf("Eroare la inregistrare!\n");
+      strcpy(mesaj, "Cele doua parole nu corespund! Reincercati!");
+    } 
 
+    sqlite3_stmt *stmt;
+    char* sql = "INSERT INTO utilizatori (u_nume, u_parola, u_permisiune, u_administrator) VALUES (?, ?, 1, 0);";
+    eroare = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    sqlite3_bind_text(stmt, 1, utilizator, strlen(utilizator), NULL);
+    sqlite3_bind_text(stmt, 2, parola, strlen(parola), NULL);
+    //se apeleaza interogarea sql
+    int step = sqlite3_step(stmt);
+
+    if(step != SQLITE_DONE)
+    {
+      //printf("Eroare la inregistrare!\n");
+      strcpy(mesaj, "Utilizator deja existent! Reincercati!");
+    }
+    else 
+    {
+      //printf("Inregistrare cu succes!\n");
+      strcpy(mesaj, "Utilizatorul a fost inregistart cu succes!");
+    }
+
+    sqlite3_reset(stmt);
+    sqlite3_finalize(stmt);
+    sqlite3_close(db); //se inchide baza de date
 }
 
-void top (int descriptor, int thread)
+int top (int descriptor, int thread) //functie pentru afisarea unui top
 {
+    
+    eroare = sqlite3_open("topmusic.db", &db); //se deschide baza de date
     printf("Se apeleaza functia top\n");
-    if (read (descriptor, genul,15) <= 0)
+    if (read (descriptor, genul,15) <= 0) //se citeste genul
 			{
-			  printf("[Thread %d]\n",thread);
+			  printf("[Thread %d]\n",thread); 
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
     printf("A fost receptionat genul muzical dorit: %s\n", genul);
+
+    if(clienti_conectati[thread] == 0) //se verifica daca utilizatorul este conectat
+    {
+      printf("Clientul nu s-a logat!\n");
+      strcpy(mesaj, "Este necesara conectarea pentru a folosi aceasta comanda. Daca nu aveti un cont, va puteti inregistra prin comanda: inregistrare.");
+      return 0;
+    }
+
+
+    sqlite3_stmt *stmt;
+    char* sql = "SELECT m_titlu, m_artist, m_gen, m_voturi FROM melodii WHERE m_gen = ? ORDER BY m_voturi DESC;";
+    eroare = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    sqlite3_bind_text(stmt, 1, genul, strlen(genul), NULL);
+    
+    char m_titlu[20], m_artist[20], m_gen[15], char_id[5], char_voturi[5];
+    int m_voturi;
+    int i=0;
+    int step = 0;
+    //se apeleaza interogarea sql
+    while(step = sqlite3_step(stmt))
+    {      
+        strcpy(m_titlu, sqlite3_column_text(stmt, 0));
+        strcpy(m_artist, sqlite3_column_text(stmt, 1));
+        strcpy(m_gen, sqlite3_column_text(stmt, 2));
+        strcpy(char_voturi, sqlite3_column_text(stmt, 3));
+    
+        m_voturi = atoi(char_voturi);
+
+        printf("%d. %s | %s | %s | %d\n", ++i, m_titlu, m_artist, m_gen, m_voturi);
+        sqlite3_reset(stmt);
+        
+    }
+    if(step != SQLITE_DONE)
+    {
+      printf("Eroare! %s\n", sqlite3_errmsg(db));
+      strcpy(mesaj, "Eroare! Nu sunt melodii din aceasta categorie.");
+    }
+    else
+    strcpy(mesaj, "Topul dorit este urmatorul: \n");
+    
+    sqlite3_finalize(stmt);
+
+    sqlite3_close(db); //se inchide baza de date
 }
 
-void adauga(int descriptor, int thread)
+int adauga(int descriptor, int thread) //functie pentru adaugarea unei melodii
 {
+
+    eroare = sqlite3_open("topmusic.db", &db); //se deschide baza de date
     printf("Se apeleaza functia adauga\n");
-    if (read (descriptor, titlu,20) <= 0)
+    if (read (descriptor, titlu,20) <= 0) //se citeste titlul
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
-    if (read (descriptor, artist,20) <= 0)
+    if (read (descriptor, artist,20) <= 0) //se citeste artistul
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
-    if (read (descriptor, genul,15) <= 0)
+    if (read (descriptor, genul,15) <= 0) //se citeste genul
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
-    if (read (descriptor, descriere,100) <= 0)
+    if (read (descriptor, descriere,100) <= 0) //se citeste descrierea
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
-    if (read (descriptor, link_yt,30) <= 0)
+    if (read (descriptor, link_yt,30) <= 0) //se citeste linkul
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
     printf("Au fost receptionate datele pentru adaugarea melodiei \"%s\", interpretata de %s, ce face parte din categoria %s. %s. Link: %s\n", titlu, artist, genul, descriere, link_yt);
+
+
+    if(clienti_conectati[thread] == 0) //se verifica daca utilizatorul este conectat
+    {
+      printf("Clientul nu s-a logat!\n");
+      strcpy(mesaj, "Este necesara conectarea pentru a folosi aceasta comanda. Daca nu aveti un cont, va puteti inregistra prin comanda: inregistrare.");
+      return 0;
+    }
+
+    sqlite3_stmt *stmt;
+    const char* sql = "INSERT INTO melodii (m_titlu, m_artist, m_gen, m_voturi, m_descriere, m_link) VALUES (?, ?, ?, 0, ?, ?);";
+    eroare = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    sqlite3_bind_text(stmt, 1, titlu, strlen(titlu), NULL);
+    sqlite3_bind_text(stmt, 2, artist, strlen(artist), NULL);
+    sqlite3_bind_text(stmt, 3, genul, strlen(genul), NULL);
+    sqlite3_bind_text(stmt, 4, descriere, strlen(descriere), NULL);
+    sqlite3_bind_text(stmt, 5, link_yt, strlen(link_yt), NULL);
+    //se apeleaza interogarea sql    
+    int step = sqlite3_step(stmt);
+    if(step == SQLITE_DONE)
+    {
+      
+      //printf("Eroare! Melodia a fost deja inregistrata!\n");
+      strcpy(mesaj, "Eroare! Melodia a fost deja inregistrata!");
+    }
+    else
+    {
+      //printf("Melodia a fost adaugata cu succes!\n");
+      strcpy(mesaj, "Melodia a fost adaugata cu succes!");
+    }
+    sqlite3_finalize(stmt);
+
+    sqlite3_close(db); //se inchide baza de date
+
 }
 
-void vot (int descriptor, int thread)
+int vot (int descriptor, int thread) //functie pentru votarea unei melodii
 {
+
+    eroare = sqlite3_open("topmusic.db", &db); //se deschide baza de date
     printf("Se apeleaza functia vot\n");
-    if (read (descriptor, titlu,20) <= 0)
+    if (read (descriptor, titlu,20) <= 0) //se citeste titlul
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
     printf("A fost receptionat titlul piesei pe care doriti sa o votati: %s\n", titlu);
+
+    if(clienti_conectati[thread] == 0) //se verifica daca utilizatorul este conectat
+    {
+      printf("Clientul nu s-a logat!\n");
+      strcpy(mesaj, "Este necesara conectarea pentru a folosi aceasta comanda. Daca nu aveti un cont, va puteti inregistra prin comanda: inregistrare.");
+      return 0;
+    }
+
+
+    sqlite3_stmt *stmt;
+    char* sql = "UPDATE melodii SET m_voturi = m_voturi + 1 WHERE m_titlu = ?;";
+    eroare = sqlite3_prepare_v2(db, sql, strlen(sql)+1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, titlu, strlen(titlu), NULL);
+    //se apeleaza interogarea sql
+    int step = sqlite3_step(stmt);
+    if(step == SQLITE_DONE)
+    {
+      //printf("Melodia a fost votata cu succes!\n");
+      strcpy(mesaj, "Melodia a fost votata cu succes!");
+    }
+    else strcpy("Melodia nu exista!");
+    sqlite3_reset(stmt);
+    sqlite3_finalize(stmt);
+
+    sqlite3_close(db); //se inchide baza de date
 }
 
-void comentariu (int descriptor, int thread)
+int comentariu (int descriptor, int thread) //functie pentru adaugarea unui comentariu
 {
+    
+    eroare = sqlite3_open("topmusic.db", &db); //se deschide baza de date
     printf("Se apeleaza functia comentariu\n");
-    if (read (descriptor, titlu,20) <= 0)
+    if (read (descriptor, titlu,20) <= 0) //se citeste titlul
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
-    if (read (descriptor, com,100) <= 0)
+    if (read (descriptor, com,100) <= 0) //se citeste comentariul
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
     printf("A fost receptionat comentariul dumneavoastra pentru melodia \"%s\": %s\n", titlu, com);
+    
+    if(clienti_conectati[thread] == 0) //se verifica daca utilizatorul este conectat
+    {
+      printf("Clientul nu s-a logat!\n");
+      strcpy(mesaj, "Este necesara conectarea pentru a folosi aceasta comanda. Daca nu aveti un cont, va puteti inregistra prin comanda: inregistrare.");
+      return 0;
+    }
+    
+    sqlite3_stmt *stmt;
+    char* sql = "INSERT INTO comentarii (m_titlu, c_comentariu) VALUES (?, ?);";
+    eroare = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    sqlite3_bind_text(stmt, 1, titlu, strlen(titlu), NULL);
+    sqlite3_bind_text(stmt, 2, com, strlen(com), NULL);
+    //se apeleaza interogarea sql
+    int step = sqlite3_step(stmt);
+
+    if(step != SQLITE_DONE)
+    {
+      //printf("Eroare la inregistrare!\n");
+      strcpy(mesaj, "Melodia nu exista!");
+    }
+    else 
+    {
+      //printf("Inregistrare cu succes!\n");
+      strcpy(mesaj, "Comentariul a fost adaugat cu succes!");
+    }
+
+    sqlite3_reset(stmt);
+    sqlite3_finalize(stmt);
+
+    sqlite3_close(db); //se inchide baza de date
 }
 
-void vizualizare (int descriptor, int thread)
+int vizualizare (int descriptor, int thread) //functie pentru vizualizarea detaliilor unei melodii
 {
+    eroare = sqlite3_open("topmusic.db", &db); //se deschide baza de date
     printf("Se apeleaza functia vizualizare\n");
-    if (read (descriptor, titlu,20) <= 0)
+    if (read (descriptor, titlu,20) <= 0) //se citeste titlul
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
     printf("A fost receptionat titlul melodiei pe care doriti sa o vizualizati: %s\n", titlu);
+    
+    if(clienti_conectati[thread] == 0) //se verifica daca utilizatorul este conectat
+    {
+      printf("Clientul nu s-a logat!\n");
+      strcpy(mesaj, "Este necesara conectarea pentru a folosi aceasta comanda. Daca nu aveti un cont, va puteti inregistra prin comanda: inregistrare.");
+      return 0;
+    }
+    
+    sqlite3_stmt *stmt;
+    char* sql = "SELECT * FROM melodii WHERE m_titlu = ?;";
+    eroare = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    sqlite3_bind_text(stmt, 1, titlu, strlen(titlu), NULL);
+    //se apeleaza interogarea sql
+
+    char m_titlu[20], m_artist[20], m_gen[15], char_voturi[5], m_descriere[200], m_link[30];
+    int  m_voturi;
+
+   int step = 0; 
+    if(step = sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        strcpy(m_titlu, sqlite3_column_text(stmt, 0));
+        strcpy(m_artist, sqlite3_column_text(stmt, 1));
+        strcpy(m_gen, sqlite3_column_text(stmt, 2));
+        strcpy(char_voturi, sqlite3_column_text(stmt, 3));
+        strcpy(m_descriere, sqlite3_column_text(stmt, 4));
+        strcpy(m_link, sqlite3_column_text(stmt, 5));
+
+        m_voturi = atoi(char_voturi);
+
+        //se construieste mesajul pentru client
+        char rezultat[200] = "Melodia dorita este:\nTitlu: ";
+        strcat(rezultat, m_titlu);
+        strcat(rezultat, "\nArtist: ");
+        strcat(rezultat, m_artist);
+        strcat(rezultat, "\nGen: ");
+        strcat(rezultat, m_gen);
+        strcat(rezultat, "\nVoturi: ");
+        strcat(rezultat, char_voturi);
+        strcat(rezultat, "\nDescriere: ");
+        strcat(rezultat, m_descriere);
+        strcat(rezultat, "\nLink: ");
+        strcat(rezultat, m_link);
+        
+        //printf("Melodia dorita este: \n%s | %s | %s | %d | %s | %s\n", m_titlu, m_artist, m_gen, m_voturi, m_descriere, m_link);
+        strcpy(mesaj, rezultat);
+        sqlite3_reset(stmt);
+    }
+
+    
+    else 
+    {
+      //printf("Eroare! NU exista aceasta melodie! %s\n",sqlite3_errmsg(db));
+      strcpy(mesaj, "Nu exista aceasta melodie!");
+    }
+
+    sqlite3_reset(stmt);
+    sqlite3_finalize(stmt);
+
+    sqlite3_close(db); //se inchide baza de date
 }
 
-void sterge (int descriptor, int thread)
+int sterge (int descriptor, int thread)  //functie pentru stergerea unei melodii
 {
+    eroare = sqlite3_open("topmusic.db", &db); //se deschde baza de date
     printf("Se apeleaza functia sterge\n");
-    if (read (descriptor, titlu,20) <= 0)
+    if (read (descriptor, titlu,20) <= 0) //se citeste titlul
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
     printf("A fost receptionat titlul melodiei pe care doriti sa o stergeti: %s\n", titlu);
+    
+    if(clienti_conectati[thread] == 0) //se verifica daca utilizatorul este conectat
+    {
+      printf("Clientul nu s-a logat!\n");
+      strcpy(mesaj, "Este necesara conectarea pentru a folosi aceasta comanda. Daca nu aveti un cont, va puteti inregistra prin comanda: inregistrare.");
+      return 0;
+    }
+    
+    sqlite3_stmt *stmt;
+    char* sql = "DELETE FROM melodii WHERE m_titlu = ?;";
+    eroare = sqlite3_prepare_v2(db, sql, strlen(sql)+1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, titlu, strlen(titlu), NULL);
+    //se apeleaza interogarea sql
+    int step = sqlite3_step(stmt);
+    if(step == SQLITE_DONE)
+    {
+      //printf("Melodia a fost stearsa!\n");
+      strcpy(mesaj, "Melodia a fost stearsa!");
+    }
+    else 
+    {
+      strcpy(mesaj, "Melodia nu exista!");
+    }
+    sqlite3_reset(stmt);
+    sqlite3_finalize(stmt);
+
+    sqlite3_close(db); //se inchide baza de date
 }
 
-void restrictioneaza (int descriptor, int thread)
+int restrictioneaza (int descriptor, int thread) // functia pentru restrictionarea unui utilizator
 {
-    printf("Se apeleaza functia restrictioneaza\n");
-    if (read (descriptor, utilizator,20) <= 0)
+    eroare = sqlite3_open("topmusic.db", &db);  //se deschide baza de date
+    printf("Se apeleaza functia restrictioneaza\n"); 
+    if (read (descriptor, utilizator,20) <= 0)  //se citeste utilizatorul
 			{
 			  printf("[Thread %d]\n",thread);
 			  perror ("Eroare la read() de la client.\n");
 			
 			}
     printf("A fost receptionat numele utilizatorului pe care doriti sa il restrictionati: %s\n", utilizator);
-}
+    
+    if(clienti_conectati[thread] == 0) //se verifica daca utilizatorul este conectat
+    {
+      printf("Clientul nu s-a logat!\n");
+      strcpy(mesaj, "Este necesara conectarea pentru a folosi aceasta comanda. Daca nu aveti un cont, va puteti inregistra prin comanda: inregistrare.");
+      return 0;
+    }
+    
+    sqlite3_stmt *stmt;
+    char* sql = "UPDATE utilizatori SET u_permisiune = u_permisiune - 1 WHERE u_nume = ? AND u_permisiune = 1;";
+    eroare = sqlite3_prepare_v2(db, sql, strlen(sql)+1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, utilizator, strlen(utilizator), NULL);
+    // se apeleaza interogarea sql
+    int step = sqlite3_step(stmt);
+    if(step == SQLITE_DONE)
+    {
+      //printf("Utilizatorul a fost restrictionat!\n");
+      strcpy(mesaj, "Utilizatorul a fost restrictionat!");
+    }
+    else 
+    {
+      strcpy(mesaj, "Utilizatorul nu exista sau este deja restrictionat!");
+    }
+    sqlite3_reset(stmt);
+    sqlite3_finalize(stmt);
 
+    sqlite3_close(db); //se inchide baza de date
+}
 
 int main ()
 {
 
+  //se creeaza tabelele in caz ca acestea nu exista
   bazaDeDate();
 
   struct sockaddr_in server;	// structura folosita de server
@@ -281,9 +583,10 @@ int main ()
   int sd;		//descriptorul de socket 
   int pid;
   pthread_t th[100];    //Identificatorii thread-urilor care se vor crea
-	int i=0;
+	
+  int i=0;
   
-  
+ 
 
   /* crearea unui socket */
   if ((sd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
@@ -337,25 +640,25 @@ int main ()
 	  perror ("[server]Eroare la accept().\n");
 	  continue;
 	}
+  
 	
-        /* s-a realizat conexiunea, se astepta mesajul */
-    
-	// int idThread; //id-ul threadului
-	// int cl; //descriptorul intors de accept
-
+  /* s-a realizat conexiunea, se astepta mesajul */
 	td=(struct thData*)malloc(sizeof(struct thData));	
 	td->idThread=i++;
 	td->cl=client;
+
 	pthread_create(&th[i], NULL, &treat, td);	      
 				
-	}//while    
-};				
+	}    
+};
+
 static void *treat(void * arg)
 {		
 	while(1)
 	{
 		struct thData tdL; 
 		tdL= *((struct thData*)arg);	
+    
 		printf ("[thread]- %d - Asteptam comanda...\n", tdL.idThread);
 		fflush (stdout); 
 		if(raspunde((struct thData*)arg)==2)
@@ -365,7 +668,7 @@ static void *treat(void * arg)
 			close ((intptr_t)arg);
 			return(NULL);	
 		}
-  	}
+  }
 };
 
 
@@ -374,7 +677,7 @@ int raspunde(void *arg)
   int i=0;
 	struct thData tdL; 
 	tdL= *((struct thData*)arg);
-	if (read (tdL.cl, comanda,15) <= 0)
+	if (read (tdL.cl, comanda,15) <= 0) //se citeste comanda de la client
 			{
 			  printf("[Thread %d]\n",tdL.idThread);
 			  perror ("Eroare la read() de la client.\n");
@@ -383,7 +686,11 @@ int raspunde(void *arg)
 	
 	printf ("[Thread %d]Comanda a fost receptionata...%s\n",tdL.idThread, comanda);
 	
+  strcpy(mesaj,"");
 int invalid=0, iesire=0;
+
+//se verifica corectitudinea comenzii
+//daca este corecta, se apeleaza o functie specifica
 
   if(strcmp(comanda,"conectare")==0) conectare(tdL.cl,tdL.idThread);
         else if(strcmp(comanda,"inregistrare")==0) inregistrare(tdL.cl,tdL.idThread);
@@ -396,9 +703,9 @@ int invalid=0, iesire=0;
                                     else if(strcmp(comanda,"restrictioneaza")==0) restrictioneaza(tdL.cl,tdL.idThread);
                                       else if(strcmp(comanda,"iesire")==0) iesire = 1;
                                         else invalid = 1;
-    if(strcmp(comanda,"iesire") == 0)
-      strcpy(mesaj, comanda);
-    if(invalid == 1) 
+    if(strcmp(comanda,"iesire") == 0) //in cazul in care comanda este iesire
+      strcpy(mesaj, comanda);         //se trimite acest mesaj catre client
+    if(invalid == 1)                  //pentru a se incheia conexiunea
     {
       strcpy(mesaj,"invalida");  
       printf("Comanda invalida!\n");
@@ -406,7 +713,8 @@ int invalid=0, iesire=0;
 		      /*pregatim mesajul de raspuns */
 		      //nr++;      
 	printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, mesaj);
-		      
+	
+
 	      /* returnam mesajul clientului */
    fflush (stdout);
 	 if (write (tdL.cl, mesaj, strlen(mesaj)+1) <= 0)
@@ -417,7 +725,7 @@ int invalid=0, iesire=0;
 	else
 		printf ("[Thread %d]Mesajul a fost trasmis cu succes.\n\n\n",tdL.idThread);
 	
-	if (iesire==1)
+	if (iesire==1) //se incheie conexiunea
     {
       printf("Clientul %d va fi deconectat!\n", tdL.idThread);
 	    return 2;
