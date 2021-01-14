@@ -362,7 +362,7 @@ int vot (int descriptor, int thread) //functie pentru votarea unei melodii
       //printf("Melodia a fost votata cu succes!\n");
       strcpy(mesaj, "Melodia a fost votata cu succes!");
     }
-    else strcpy("Melodia nu exista!");
+    else strcpy(mesaj, "Melodia nu exista!");
     sqlite3_reset(stmt);
     sqlite3_finalize(stmt);
 
